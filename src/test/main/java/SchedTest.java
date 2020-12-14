@@ -1,5 +1,6 @@
-import cn.xnatural.sched.SchedQuartz;
-import org.quartz.CronExpression;
+import cn.xnatural.sched.Sched;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -8,17 +9,26 @@ import java.util.Date;
 import java.util.Random;
 
 public class SchedTest {
+    static final Logger log = LoggerFactory.getLogger(SchedTest.class);
 
     public static void main(String[] args) throws Exception {
-        SchedQuartz sched = new SchedQuartz();
-        sched.cron("0 0/5 * * * ? ", () -> System.out.println("每隔5分钟执行"));
-        sched.after(Duration.ofMinutes(3), () -> System.out.println("3分钟之后执行"));
-        sched.time(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2020-12-12 11:55:33"), () -> System.out.println("2020-12-12 11:55:33 执行"));
+        // SchedQuartz sched = new SchedQuartz();
+        Sched sched = new Sched();
+        sched.cron("0/10 * * * * ? ", () -> log.info("cron 每隔10秒钟执行"));
+        sched.after(Duration.ofSeconds(15), () -> log.info("after 15秒之后执行"));
+        Date d = new Date(System.currentTimeMillis() + Duration.ofSeconds(10).toMillis());
+        sched.time(d, () -> log.info("time " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(d) + " 执行")));
         sched.dyn(() -> {
-            if (new Random().nextInt(100) == 70) return null; // 返回null任务停止
+            if (new Random().nextInt(20) == 17) return null; // 返回null任务停止
             Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.MINUTE, new Random().nextInt(30) + 10);
-            return cal.getTime();
-        }, () -> System.out.println("动态任务执行"));
+            cal.add(Calendar.SECOND, new Random().nextInt(10) + 10);
+            Date date = cal.getTime();
+            log.info("dyn 获取时间: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(date));
+            return date;
+        }, () -> log.info("dyn 任务执行: "  + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(new Date())));
+
+        Thread.sleep(1000 * 60 * 2);
+        sched.stop();
+        log.error("end =================");
     }
 }

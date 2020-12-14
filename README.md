@@ -1,7 +1,7 @@
 ### 介绍
 轻量级定时任务调度
 
-### 四种时间任务调度
+### 四种时间任务调度 Sched sched = new Sched();
 
 #### cron时间表达式
 sched.cron(cron表达式, 任务函数)
