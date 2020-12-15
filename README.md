@@ -1,7 +1,9 @@
 ### 介绍
 轻量级定时任务调度
 
-### 四种时间任务调度 Sched sched = new Sched();
+### 四种时间任务调度
+* Sched sched = new Sched(); // 不依赖
+* SchedQuartz sched = new SchedQuartz().start(); // 依赖Quartz
 
 #### cron时间表达式
 sched.cron(cron表达式, 任务函数)

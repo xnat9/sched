@@ -134,31 +134,26 @@ public class Sched {
     private final void trigger() {
         while (!stop.get()) {
             Date now = new Date();
-            log.trace("trigger : " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(now));
             Date nextTriggerTime = null;
             for (Iterator<Scheder> it = scheders.iterator(); it.hasNext(); ) {
                 Scheder scheder = it.next();
                 scheder.tryRun(now);
                 Date nextDate = scheder.nextDate(now);
                 if (nextDate == null) {
-                    log.info("删除");
                     it.remove(); continue;
                 }
                 nextTriggerTime = (nextTriggerTime == null || nextTriggerTime.getTime() > nextDate.getTime()) ? nextDate : nextTriggerTime;
             }
             try {
                 synchronized (sigLock) {
-                    long wait = (nextTriggerTime == null ? Long.valueOf(attrs.getOrDefault("waitTimeout", 1000L * 60).toString()) : nextTriggerTime.getTime() - now.getTime());
-                    log.trace("wait: {}, nextTriggerTime: {}", wait, nextTriggerTime == null ? null : nextTriggerTime);
                     sigLock.wait(
-                         wait
+                            (nextTriggerTime == null ? Long.valueOf(attrs.getOrDefault("waitTimeout", 1000L * 60).toString()) : nextTriggerTime.getTime() - now.getTime())
                     );
                 }
             } catch (InterruptedException e) {
                 log.error("", e);
             }
         }
-        log.info("trigger end...............");
     }
 
 
@@ -201,7 +196,6 @@ public class Sched {
             if (d == null) return false;
             long gap = now.getTime() - d.getTime();
             if (gap > getTimeout()) { // 过了执行时间 并且超过误差范围
-                log.warn("过了执行时间 并且超过超时范围: " + gap);
                 dateQueue.remove(d);
                 return false;
             }

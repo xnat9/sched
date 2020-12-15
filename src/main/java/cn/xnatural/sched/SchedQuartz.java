@@ -177,7 +177,7 @@ public class SchedQuartz {
             @Override
             public void run() {
                 try {
-                    fn.run();
+                    exec.execute(fn);
                 } finally {
                     Date d = dateSupplier.get();
                     if (d != null) time(d, this);
@@ -185,6 +185,13 @@ public class SchedQuartz {
             }
         });
     }
+
+
+    /**
+     * Quartz Scheduler
+     * @return
+     */
+    public Scheduler getScheduler() { return scheduler; }
 
 
     /**
