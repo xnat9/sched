@@ -1,9 +1,17 @@
 ### 介绍
-轻量级定时任务调度
+定时任务: 封装quartz
+
+### 安装教程
+```
+<dependency>
+    <groupId>cn.xnatural.task</groupId>
+    <artifactId>task</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
 
 ### 四种时间任务调度
-* Sched sched = new Sched(); // 不依赖
-* SchedQuartz sched = new SchedQuartz().start(); // 依赖Quartz
+Sched sched = new Sched()
 
 #### cron时间表达式
 sched.cron(cron表达式, 任务函数)

@@ -7,7 +7,7 @@
     <groupId>cn.xnatural.sched</groupId>
     <artifactId>sched</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
     <url>https://gitee.com/xnat/sched</url>
 
@@ -21,7 +21,6 @@
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>2.3.2</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>

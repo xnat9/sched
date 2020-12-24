@@ -1,5 +1,4 @@
 import cn.xnatural.sched.Sched;
-import cn.xnatural.sched.SchedQuartz;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,9 +13,10 @@ public class SchedTest {
 
     public static void main(String[] args) throws Exception {
         // SchedQuartz sched = new SchedQuartz().start();
-        Sched sched = new Sched();
+        Sched sched = new Sched().init();
         sched.cron("0/10 * * * * ? ", () -> log.info("cron 每隔10秒钟执行"));
-        sched.after(Duration.ofSeconds(15), () -> log.info("after 15秒之后执行"));
+        sched.after(Duration.ofSeconds(5), () -> log.info("after 5秒之后执行"));
+        sched.after(Duration.ofSeconds(20), () -> log.info("after 20秒之后执行"));
         Date d = new Date(System.currentTimeMillis() + Duration.ofSeconds(10).toMillis());
         sched.time(d, () -> log.info("time " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(d) + " 执行")));
         sched.dyn(() -> {
