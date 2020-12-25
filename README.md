@@ -4,8 +4,8 @@
 ### 安装教程
 ```
 <dependency>
-    <groupId>cn.xnatural.task</groupId>
-    <artifactId>task</artifactId>
+    <groupId>cn.xnatural.sched</groupId>
+    <artifactId>sched</artifactId>
     <version>1.0.1</version>
 </dependency>
 ```
