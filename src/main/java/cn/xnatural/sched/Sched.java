@@ -189,6 +189,29 @@ public class Sched {
 
 
     /**
+     * 间隔时间执行
+     * @param duration 间隔时间
+     * @param fn 任务函数
+     */
+    public void fixedDelay(Duration duration, Runnable fn) {
+        if (scheduler == null) throw new RuntimeException("Please init first");
+        if (duration == null) throw new IllegalArgumentException("Param duration required");
+        if (fn == null) throw new IllegalArgumentException("Param fn required");
+        Runnable wrapFn = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    fn.run();
+                } finally {
+                    after(duration, this);
+                }
+            }
+        };
+        after(duration, wrapFn);
+    }
+
+
+    /**
      * Quartz Scheduler
      * @return
      */

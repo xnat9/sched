@@ -27,7 +27,9 @@ public class SchedTest {
             log.info("dyn 获取时间: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(date));
             return date;
         }, () -> log.info("dyn 任务执行: "  + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(new Date())));
-
+        sched.fixedDelay(Duration.ofSeconds(2), () -> {
+            log.info("fixedDelay=====");
+        });
         Thread.sleep(1000 * 60 * 2);
         sched.stop();
         log.error("end =================");

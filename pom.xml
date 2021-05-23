@@ -43,7 +43,7 @@
 
 
     <name>sched</name>
-    <description>轻量级定时任务调度</description>
+    <description>轻量级时间任务调度</description>
 
     <licenses>
         <license>
