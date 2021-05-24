@@ -7,7 +7,7 @@
     <groupId>cn.xnatural.sched</groupId>
     <artifactId>sched</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <url>https://gitee.com/xnat/sched</url>
 
