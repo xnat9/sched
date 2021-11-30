@@ -9,7 +9,10 @@
     <packaging>jar</packaging>
     <version>1.0.3</version>
 
+    <name>sched</name>
+    <description>轻量级时间任务调度</description>
     <url>https://gitee.com/xnat/sched</url>
+
 
     <dependencies>
         <dependency>
@@ -41,9 +44,6 @@
         </dependency>
     </dependencies>
 
-
-    <name>sched</name>
-    <description>轻量级时间任务调度</description>
 
     <licenses>
         <license>

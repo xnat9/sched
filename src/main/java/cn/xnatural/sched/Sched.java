@@ -32,7 +32,7 @@ public class Sched {
     public Sched(Map<String, Object> attrs, ExecutorService exec) {
         this.attrs = attrs == null ? new ConcurrentHashMap<>() : attrs;
         this.exec = exec == null ? Executors.newFixedThreadPool(4, new ThreadFactory() {
-            AtomicInteger i = new AtomicInteger(1);
+            final AtomicInteger i = new AtomicInteger(1);
             @Override
             public Thread newThread(Runnable r) {
                 return new Thread(r, "sched-" + i.getAndIncrement());
@@ -43,7 +43,7 @@ public class Sched {
 
     /**
      * 初始化Quartz
-     * @return
+     * @return {@link Sched}
      */
     public Sched init() {
         if (scheduler != null) throw new RuntimeException("Sched already inited");
@@ -82,8 +82,9 @@ public class Sched {
      * 添加 时间表达式 任务
      * @param cron 时间表达式
      * @param fn 要执行的函数
+     * @return {@link Sched}
      */
-    public void cron(String cron, Runnable fn) {
+    public Sched cron(String cron, Runnable fn) {
         if (scheduler == null) throw new RuntimeException("Please init first");
         if (cron == null || cron.isEmpty()) throw new IllegalArgumentException("Param cron not empty");
         if (fn == null) throw new IllegalArgumentException("Param fn required");
@@ -103,36 +104,7 @@ public class Sched {
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-    /**
-     * 在多少时间之后执行
-     * @param duration 时间段
-     * @param fn 任务函数
-     */
-    public void after(Duration duration, Runnable fn) {
-        if (scheduler == null) throw new RuntimeException("Please init first");
-        if (duration == null) throw new IllegalArgumentException("Param duration required");
-        if (fn == null) throw new IllegalArgumentException("Param fn required");
-        final JobDataMap data = new JobDataMap();
-        data.put(KEY_FN, fn);
-        String id = duration.toMillis() + "_" + UUID.randomUUID().toString().replace("-", "");
-        SimpleDateFormat sdf = new SimpleDateFormat("ss mm HH dd MM ? yyyy");
-        String cron = sdf.format(new Date(new Date().getTime() + duration.toMillis()));
-        Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(new TriggerKey(id, "after"))
-                .withSchedule(CronScheduleBuilder.cronSchedule(cron))
-                .build();
-        try {
-            Date d = scheduler.scheduleJob(
-                    JobBuilder.newJob(JopTpl.class).withIdentity(id, "after").setJobData(data).build(),
-                    trigger
-            );
-            log.debug("add after '{}' job will execute at '{}'", id, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS").format(d));
-        } catch (SchedulerException e) {
-            throw new RuntimeException(e);
-        }
+        return this;
     }
 
 
@@ -140,8 +112,9 @@ public class Sched {
      * 在将来的某个时间点执行
      * @param time 时间点
      * @param fn 任务函数
+     * @return {@link Sched}
      */
-    public void time(Date time, Runnable fn) {
+    public Sched time(Date time, Runnable fn) {
         if (scheduler == null) throw new RuntimeException("Please init first");
         if (time == null) throw new IllegalArgumentException("Param time required");
         if (fn == null) throw new IllegalArgumentException("Param fn required");
@@ -163,41 +136,37 @@ public class Sched {
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
+        return this;
     }
 
 
     /**
-     * 动态任务调度执行. 自定义下次执行时间
-     * @param dateSupplier 下次触发时间计算函数. 函数返回下次触发时间. 如果返回空 则停止
+     * 在多少时间之后执行
+     * @param duration 时间段
      * @param fn 任务函数
+     * @return {@link Sched}
      */
-    public void dyn(Supplier<Date> dateSupplier, Runnable fn) {
+    public Sched after(Duration duration, Runnable fn) {
         if (scheduler == null) throw new RuntimeException("Please init first");
-        if (dateSupplier == null) throw new IllegalArgumentException("Param dateSupplier required");
-        time(dateSupplier.get(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    exec.execute(fn);
-                } finally {
-                    Date d = dateSupplier.get();
-                    if (d != null) time(d, this);
-                }
-            }
-        });
+        if (duration == null) throw new IllegalArgumentException("Param duration required");
+        return time(new Date(duration.toMillis() + System.currentTimeMillis()), fn);
     }
 
 
     /**
-     * 间隔时间执行
+     * 任务间隔执行
+     * {@link #fixedDelay}: 每次任务执行完成后才开始计算下次执行时间
+     * {@link #fixedRate}: 每次执行即计算下次执行时间. 注意函数自己应该捕获异常
      * @param duration 间隔时间
+     * @param initialDelay 第一次延迟多久后执行, 为空则立即执行
      * @param fn 任务函数
+     * @return {@link Sched}
      */
-    public void fixedDelay(Duration duration, Runnable fn) {
+    public Sched fixedDelay(Duration duration, Duration initialDelay, Runnable fn) {
         if (scheduler == null) throw new RuntimeException("Please init first");
         if (duration == null) throw new IllegalArgumentException("Param duration required");
         if (fn == null) throw new IllegalArgumentException("Param fn required");
-        Runnable wrapFn = new Runnable() {
+        final Runnable wrapFn = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -207,13 +176,88 @@ public class Sched {
                 }
             }
         };
-        after(duration, wrapFn);
+        if (initialDelay == null) wrapFn.run();
+        else after(initialDelay, wrapFn);
+        return this;
+    }
+
+    /**
+     * 任务间隔执行
+     * @param duration 间隔时间
+     * @param fn 任务函数
+     * @return {@link Sched}
+     */
+    public Sched fixedDelay(Duration duration, Runnable fn) {
+        return fixedDelay(duration, null, fn);
+    }
+
+
+    /**
+     * 时间间隔执行
+     * {@link #fixedDelay}: 每次任务执行完成后才开始计算下次执行时间
+     * {@link #fixedRate}: 每次执行即计算下次执行时间. 注意函数自己应该捕获异常
+     * @param duration 间隔时间
+     * @param initialDelay 第一次延迟多久后执行, 为空则立即执行
+     * @param fn 任务函数
+     * @return {@link Sched}
+     */
+    public Sched fixedRate(Duration duration, Duration initialDelay, Runnable fn) {
+        if (scheduler == null) throw new RuntimeException("Please init first");
+        if (duration == null) throw new IllegalArgumentException("Param duration required");
+        if (fn == null) throw new IllegalArgumentException("Param fn required");
+        final Runnable wrapFn = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    exec.execute(fn);
+                } finally {
+                    after(duration, this);
+                }
+            }
+        };
+        if (initialDelay == null) wrapFn.run();
+        else after(initialDelay, wrapFn);
+        return this;
+    }
+
+    /**
+     * 时间间隔执行
+     * @param duration 间隔时间
+     * @param fn 任务函数
+     * @return {@link Sched}
+     */
+    public Sched fixedRate(Duration duration, Runnable fn) {
+        return fixedRate(duration, null, fn);
+    }
+
+
+    /**
+     * 动态任务调度执行. 自定义下次执行时间
+     * @param dateSupplier 下次触发时间计算函数. 函数返回下次触发时间. 如果返回空 则停止
+     * @param fn 任务函数
+     * @return {@link Sched}
+     */
+    public Sched dyn(Supplier<Date> dateSupplier, Runnable fn) {
+        if (scheduler == null) throw new RuntimeException("Please init first");
+        if (dateSupplier == null) throw new IllegalArgumentException("Param dateSupplier required");
+        time(dateSupplier.get(), new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    fn.run();
+                } finally {
+                    Date d = dateSupplier.get();
+                    if (d != null) time(d, this);
+                }
+            }
+        });
+        return this;
     }
 
 
     /**
      * Quartz Scheduler
-     * @return
+     * @return {@link Scheduler}
      */
     public Scheduler getScheduler() { return scheduler; }
 
