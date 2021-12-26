@@ -4,9 +4,9 @@
 # 安装教程
 ```xml
 <dependency>
-    <groupId>cn.xnatural.sched</groupId>
+    <groupId>cn.xnatural</groupId>
     <artifactId>sched</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
